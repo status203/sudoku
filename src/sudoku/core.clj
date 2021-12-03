@@ -15,19 +15,6 @@
      _ _ _   4 _ _   _ 5 _
      1 _ 8   _ _ _   6 _ 2]))
 
-(def full-set (set (take 9 (iterate inc 1))))
-
-(defn prepare-grid
-  "Takes a 1D vector of integers (set values) and nils (empty cells) 
-   representing an initial sudoku grid and replaces all nils with a full set 
-   representing possible entries."
-  [grid]
-  (map #(or % full-set) grid))
-
-(comment
-  (partition 9 (prepare-grid easy1))
-  )
-
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
