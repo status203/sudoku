@@ -1,4 +1,4 @@
-(ns sudoku.domain)
+(ns sudoku.domain.grid)
 
 (def full-set (set (take 9 (iterate inc 1))))
 
@@ -51,8 +51,23 @@
          (partition 9)
          (drop (* 3 sg-row-idx))
          (take 3)
-         (map #(take 3 (drop (* 3 sg-col-idx) %)))
+         (map #(->> %
+                    (drop (* 3 sg-col-idx))
+                    (take 3)))
          flatten)))
+
+(defn split-grid
+  "Takes a grid and converts it to a map of two grids :definite & :possible
+   with nils populating the gaps in each"
+  [grid]
+  (reduce (fn [acc cell]
+            (let [possible (if (set? cell) cell nil)
+                  definite (if possible nil cell)]
+              (-> acc
+                  (update-in [:definite] conj definite)
+                  (update-in [:possible] conj possible))))
+          {:definite [] :possible []}
+          grid))
 
 (comment
   (def easy1
@@ -68,7 +83,8 @@
        5 6 _   _ 8 _   _ _ _
        _ _ _   4 _ _   _ 5 _
        1 _ 8   _ _ _   6 _ 2]))
-  
-  (cell->subgrid easy1 80)
+  (def peasy1 (prepare-grid easy1))
+  (partition 9 peasy1)
+  (partition 9 (split-grid peasy1))
   )
 
