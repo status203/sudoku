@@ -1,23 +1,31 @@
 (ns sudoku.core
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [clojure.string :as str]))
 
-(def easy1
-  (let [_ nil]
-    [6 7 _   _ 3 8   4 2 9
-     3 1 4   _ 9 5   _ 8 6
-     _ _ 2   _ 4 7   _ _ _
+(defn parse-entry
+  "Given a single entry from a board file returns either nil for an unset entry
+   or an int for a set entry"
+  [entry] (if (= entry "_") nil (Integer/parseInt entry)))
 
-     _ _ 1   _ 6 _   _ _ _
-     _ 3 _   8 _ _   5 _ 4
-     _ _ _   3 2 _   _ 6 7
 
-     5 6 _   _ 8 _   _ _ _
-     _ _ _   4 _ _   _ 5 _
-     1 _ 8   _ _ _   6 _ 2]))
+(defn load-board
+  "Takes a filename of a file containing a (non-clojure) sequence of whitespace
+   separated board entries with unset entries represented by '_' (see the
+   'boards' folder for examples) and returns a vector of those entries with 
+   unset entries represented by nil"
+  [filename]
+  (let [raw (slurp filename)
+        entries (str/split raw #"\s+")]
+    (map parse-entry entries)))
+
+(comment
+  (str/split "a   b" #"\s+")
+  (load-board "boards/easy1"))
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (println "Hello, World!"))
-
+  (prn (partition 9 (load-board (first args)))))
 

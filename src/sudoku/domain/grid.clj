@@ -85,6 +85,6 @@
        1 _ 8   _ _ _   6 _ 2]))
   (def peasy1 (prepare-grid easy1))
   (partition 9 peasy1)
-  (partition 9 (split-grid peasy1))
+  (split-grid peasy1)
   )
 
