@@ -2,7 +2,7 @@
   (:gen-class)
   (:require
    [cli-matic.core :refer [run-cmd]]
-   [clojure.string :as str]))
+   [sudoku.domain.grid :as grid]))
 
 (defn display-board
  "Displays a board"
@@ -14,20 +14,11 @@
    or an int for a set entry"
   [entry] (if (= entry "_") nil (Integer/parseInt entry)))
 
-(defn parse-board
-  "Takes a string containing a (non-clojure) sequence of whitespace separated 
-   board entries with unset entries represented by '_' (see the 'boards' folder 
-   for examples) and returns a vector of those entries with unset entries 
-   represented by nil"
-  [raw-board]
-  (let [entries (str/split raw-board #"\s+")]
-    (map parse-entry entries)))
-
 (defn solve-board
  "Takes an unprocessed board, parses it and solves it (hopefully :|)"
  [{:keys [:board]}]
- (let [parsed-board (parse-board board)]
-   (display-board parsed-board)))
+ (let [parsed-board (grid/parse-grid board)]
+   (grid/print-grid parsed-board)))
 
 (def cli-options
   {:command "sudoku"
@@ -39,7 +30,7 @@
    :runs solve-board})
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Load & solve board"
   [& args]
   (run-cmd args cli-options))
 

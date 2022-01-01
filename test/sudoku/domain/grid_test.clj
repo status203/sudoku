@@ -2,8 +2,8 @@
   (:require [clojure.test :refer [deftest is]]
             [sudoku.domain.grid :as sut]))
 
-(def small-grid (let [_ nil] [1 _
-                              2 1]))
+(def small-grid (let [_ sut/full-set] [1 _
+                                       2 1]))
 
 (defn rotate-left
   "Rotates a seq 1 left"
@@ -26,10 +26,10 @@
   ;;     (8 0 1   2 3 4   5 6 7))
 )
 
-(deftest prepare-grid-tests
+(deftest parse-grid-tests
   (is (= [1 sut/full-set
           2 1]
-         (sut/prepare-grid small-grid))))
+         (sut/parse-grid small-grid))))
 
 (deftest cell->row-index-tests
   (is (= 0

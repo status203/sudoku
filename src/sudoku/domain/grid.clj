@@ -1,14 +1,17 @@
-(ns sudoku.domain.grid)
+(ns sudoku.domain.grid
+  (:require [clojure.string :as str]))
 
 (def full-set (set (take 9 (iterate inc 1))))
 
-(defn prepare-grid
-  "Takes a 1D vector of integers (initally set values) and nils (empty cells) 
-   representing an initial sudoku grid and replaces all nils with a full set 
-   representing possible entries."
-  [grid]
-  (map #(or % full-set) grid))
-
+(defn parse-grid
+  "Takes a string containing a (non-clojure) sequence of whitespace separated 
+   board entries with unset entries represented by '_' (see the 'boards' folder 
+   for examples) and returns a vector of those entries with unset entries 
+   represented by a full set of possibilities"
+  [raw-board]
+  (let [entries (str/split raw-board #"\s+")]
+    (map #(if (= % "_") full-set (Integer/parseInt %))
+         entries)))
 
 (defn cell->row-index
   "Takes a 1D cell location and returns the 0-based row index of that cell"
@@ -41,7 +44,7 @@
   [grid cell]
   (let [idx (cell->col-index cell)]
     (->> (partition 9 grid)
-        (map #(first (drop idx %))))))
+         (map #(first (drop idx %))))))
 
 (defn cell->subgrid
   "Takes a grid and a 1D cell location and returns the subgrid containing that cell"
@@ -56,18 +59,72 @@
                     (take 3)))
          flatten)))
 
-(defn split-grid
-  "Takes a grid and converts it to a map of two grids :definite & :possible
-   with nils populating the gaps in each"
+(def all-refs
+ (->> (concat (range (int \a) (inc (int \z)))
+              (range (int \A) (inc (int \Z)))
+              (range (int \0) (inc (int \9)))
+              [\@ \#])
+      (map char)))
+
+(defn prepare-print-grid
+  "Returns a map of
+     :grid - vector of ints for definites and references (chars) for non-definites
+     :refs - vector of maps [{:ref :possibilities}*]"
   [grid]
-  (reduce (fn [acc cell]
-            (let [possible (if (set? cell) cell nil)
-                  definite (if possible nil cell)]
-              (-> acc
-                  (update-in [:definite] conj definite)
-                  (update-in [:possible] conj possible))))
-          {:definite [] :possible []}
-          grid))
+  (loop [[cell & rest-grid] grid 
+         remaining-refs all-refs
+         printable-grid []
+         printable-refs []]
+    (cond
+      (nil? cell) {:grid printable-grid :refs printable-refs}
+      (int? cell) (recur rest-grid 
+                         remaining-refs
+                         (conj printable-grid cell)
+                         printable-refs)
+      :else (let [ref (first remaining-refs)]
+              (recur rest-grid
+                     (rest remaining-refs)
+                     (conj printable-grid ref)
+                     (conj printable-refs {:ref ref :possibilities cell}))))))
+
+(def vertical-separator " | ")
+(def horizontal-separator (apply str (repeat 29 \-)))
+
+(defn row->string
+  "Takes a row and prints it"
+  [row]
+  (->> row
+       (partition 3)
+       (interpose :separator)
+       flatten
+       (map #(cond (int? %) (str \space % \space)
+                   (char? %) (str \[ % \])
+                   :else "|"))
+       (apply str)))
+
+(comment
+  (row->string [1 2 3 \a 5 \b \c 8 9])
+  )
+
+(defn print-grid
+  "Takes a grid and outputs it - definites output in the grid and possibiles
+   referenced and displayed below"
+  [grid]
+  (println
+   (apply str
+    (let [{:keys [:grid :refs]} (prepare-print-grid grid)]
+      [(->> (partition 9 grid)
+            (map row->string)
+            (partition 3)
+            (interpose horizontal-separator)
+            flatten
+            (interpose \newline)
+            (apply str))
+       \newline
+       \newline
+       (->> refs
+            (map #(str (:ref %) ": " (:possibilities %) \newline))
+            (apply str))]))))
 
 (comment
   (def easy1
@@ -83,8 +140,10 @@
        5 6 _   _ 8 _   _ _ _
        _ _ _   4 _ _   _ 5 _
        1 _ 8   _ _ _   6 _ 2]))
-  (def peasy1 (prepare-grid easy1))
-  (partition 9 peasy1)
-  (split-grid peasy1)
+  (def peasy1 (parse-grid easy1))
+  
+  (prepare-print-grid peasy1)
+  (print-grid peasy1)
+  (print-grid (concat (take 80 peasy1) [#{1 2 3}]))
   )
 
